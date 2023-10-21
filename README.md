@@ -28,7 +28,7 @@ Following VICREg paper and for simplicity sake, the transformations applied to g
 3. Random chance of changing the brightness, hue and contrast of the image
 4. Random chance of turning the image to monochrome
 
-![](resources/transformation-example.png)
+<p align="center"><img src="resources/transformation-example.png"/></p>
 
 ### Loss functions
 
