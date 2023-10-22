@@ -1,8 +1,10 @@
 # Learning images representations with self-supervised learning
 
-The repository contains the implementation of three loss functions allowing to learn semantically meaningful representations of images with a self-supervised approach, as well as a simple implementation of Residual Neural Network that does the encoding.
+The repository contains the implementation of three loss functions allowing to learn semantically meaningful representations of images with a self-supervised approach, and a simple implementation of the Residual Neural Network architecture that does the encoding.
 
 ## What is self-supervised learning? <a name = "what_is_self_supervised_learning"></a>
+
+<p align="center"><img src="resources/contrastive-learning.png"/></p>
 
 It is a paradigm that allows to leverage vast amount of un-labeled data. Contrary to supervised learning, self-supervised learning does not need noiseless, clean labels attached to each sample to learn useful representations of the data.
 
