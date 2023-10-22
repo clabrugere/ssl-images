@@ -1,19 +1,19 @@
+from typing import Tuple
+
 import torch
-from typing import Any, Callable, Tuple
 from torch import Tensor
-from torchvision.transforms import v2, InterpolationMode
 from torchvision.datasets import CIFAR10
+from torchvision.transforms import InterpolationMode, v2
 
 
 class ContrastiveCIFAR10(CIFAR10):
     def __init__(
         self,
         root: str,
-        transform: Callable[..., Any] | None = None,
         train: bool = True,
         download: bool = False,
     ) -> None:
-        transforms = self._get_transforms() if transform is None else transform
+        transforms = self._get_transforms()
         super().__init__(root, train, transforms, None, download)
 
     def _get_transforms(self):
@@ -38,7 +38,10 @@ class ContrastiveCIFAR10(CIFAR10):
         # instead of returning one transformed image along with its label, it returns a pair of images transformed
         # independently
         img = self.data[index]
-        img_1 = self.transform(img)
-        img_2 = self.transform(img)
+        if self.transform:
+            img_1 = self.transform(img)
+            img_2 = self.transform(img)
+        else:
+            img_1, img_2 = img, img
 
         return img_1, img_2

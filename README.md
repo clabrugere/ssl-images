@@ -34,9 +34,15 @@ Following VICREg paper and for simplicity sake, the transformations applied to g
 
 While steps 1-3 are the same, the loss functions are different:
 
-- Normalized Temperature-scaled Cross Entropy (NT-Xent)
-- Decoupled Contrastive loss (DCL)
-- Variance-Invariance-Covariance Regularization (VICReg)
+- **Normalized Temperature-scaled Cross Entropy (NT-Xent)** - Intuitively, it makes representations of two views of the same sample closer in the embedding space by minimizing the cosine similarity between them, while making representations of views of different samples farther.
+
+- **Decoupled Contrastive loss (DCL)** is similar to NT-Xent with the difference that the positive pair is discarded in the denominator.
+
+- **Variance-Invariance-Covariance Regularization (VICReg)** - Linearly combines three terms so to get interesting properties:
+  - a representation loss making representations of two views of the same sample closer in the embedding space (using MSE on embedding vectors),
+  - a term making the variance of each dimension of embedding vectors within a batch converge towards a gamma constant in order to avoid dimensional collapse where all samples are represented by the same vector.
+  - a term making the covariance of embedding vectors within a batch converge towards a diagonal matrix in order to make each dimension as independent as possible so that dimensions encode different information.
+
 
 ## Getting Started <a name = "getting_started"></a>
 
@@ -50,15 +56,11 @@ Clone the repository:
 - pytorch 2.1.0
 - torchvision 0.16.0
 
-## Usage <a name = "usage"></a>
-
-```python
-# TODO
-```
 
 ## References <a name = "references"></a>
 
 - [A Cookbook of Self-Supervised Learning](https://arxiv.org/abs/2304.12210)
 - [A Simple Framework for Contrastive Learning of Visual Representations](https://arxiv.org/abs/2002.05709)
+- [The NT-Xent loss upper bound](https://arxiv.org/abs/2205.03169v1)
 - [Decoupled Contrastive Learning](https://arxiv.org/abs/2110.06848)
 - [VICReg: Variance-Invariance-Covariance Regularization for Self-Supervised Learning](https://arxiv.org/abs/2105.04906)

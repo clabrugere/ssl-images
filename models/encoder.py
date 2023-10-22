@@ -1,16 +1,7 @@
-from torch import Tensor
-from torch.nn import (
-    Module,
-    Sequential,
-    Conv2d,
-    BatchNorm2d,
-    ReLU,
-    MaxPool2d,
-    Identity,
-    AdaptiveAvgPool2d,
-)
-from torch.nn.init import kaiming_normal_, constant_
 import torch.nn.functional as F
+from torch import Tensor
+from torch.nn import AdaptiveAvgPool2d, BatchNorm2d, Conv2d, Identity, MaxPool2d, Module, ReLU, Sequential
+from torch.nn.init import constant_, kaiming_normal_
 
 
 class ShortcutProjection(Module):

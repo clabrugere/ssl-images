@@ -1,11 +1,10 @@
-from collections import defaultdict
+from typing import List
 
 import torch
 from torch.nn import Module
-from torch.utils.data import DataLoader
-import torch.nn.functional as F
 from torch.optim import Adam
 from torch.optim.lr_scheduler import CosineAnnealingLR
+from torch.utils.data import DataLoader
 
 
 def train(
@@ -16,7 +15,7 @@ def train(
     max_epoch: int,
     device: torch.device,
     weight_decay: float = 0.0,
-) -> defaultdict:
+) -> List:
     model.to(device)
     model.train()
 
@@ -30,8 +29,8 @@ def train(
         for step, (x_1, x_2) in enumerate(dl_train):
             optimizer.zero_grad(set_to_none=True)
 
-            x_1, x_2 = x_1.to(device, non_blocking=True), x_2.to(device, non_blocking=True)
-            z_1, z_2 = model(x_1), model(x_2)
+            x_1, x_2 = x_1.to(device), x_2.to(device)
+            z_1, z_2 = model(x_1, x_2)
 
             loss = loss_func(z_1, z_2)
             loss.backward()
@@ -39,7 +38,7 @@ def train(
             optimizer.step()
             scheduler.step()
 
-            running_loss += loss.detach().cpu()
+            running_loss += loss
             print(
                 f"Epoch {epoch + 1} - step {step + 1}/{len(dl_train)} - lr: {scheduler.get_last_lr()[-1]:.4f} - ",
                 f"loss: {running_loss / (step + 1):.4f}",
@@ -47,4 +46,6 @@ def train(
             )
 
         print()
-        loss_history.append(running_loss / (step + 1))
+        loss_history.append(running_loss.detach().cpu().item() / len(dl_train))
+
+    return loss_history

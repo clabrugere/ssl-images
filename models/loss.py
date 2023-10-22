@@ -1,40 +1,40 @@
 import torch
+import torch.nn.functional as F
 from torch import Tensor
 from torch.nn import Module
-import torch.nn.functional as F
 
 
 class NTXent(Module):
-    def __init__(self, temperature: float = 1.0) -> None:
+    # adapted from https://github.com/clabrugere/pytorch-scarf/blob/master/scarf/loss.py but rewrite the loss to avoid
+    # explicit log(exp(.)) and log(sum(exp(.))) operations to improve numerical stability.
+    def __init__(self, temperature=1.0):
         super().__init__()
         self.temperature = temperature
 
-    def forward(self, anchor: Tensor, positive: Tensor) -> Tensor:
-        # assumes that anchor and positive are tensors of size (bs, dim_emb)
-        batch_size, device = anchor.size(0), anchor.device
+    def forward(self, z_1, z_2):
+        batch_size, device = z_1.size(0), z_1.device
 
-        # compute cosine similarity
-        anchor = F.normalize(anchor, p=2, dim=1)  # (bs, dim_emb)
-        positive = F.normalize(positive, p=2, dim=1)  # (bs, dim_emb)
+        # compute similarities between all the 2N views
+        z = torch.cat([z_1, z_2], dim=0)  # (2 * bs, dim_emb)
+        similarity = F.cosine_similarity(z[:, None], z[None, :], dim=2) / self.temperature  # (2 * bs, 2 * bs)
+        sim_ij = torch.diag(similarity, batch_size)  # (bs,)
+        sim_ji = torch.diag(similarity, -batch_size)  # (bs,)
 
-        # compute loss
-        diag_mask = torch.eye(batch_size, device=device, dtype=torch.bool)  # (bs, bs)
-        logits_00 = (anchor @ anchor.T) / self.temperature  # (bs, bs)
-        logits_01 = (anchor @ positive.T) / self.temperature  # (bs, bs)
-        logits_10 = (positive @ anchor.T) / self.temperature  # (bs, bs)
-        logits_11 = (positive @ positive.T) / self.temperature  # (bs, bs)
+        # positive contains the 2N similarities between two views of the same sample
+        positives = torch.cat([sim_ij, sim_ji], dim=0)  # (2 * bs,)
 
-        # discard similarities from the same views of the same sample
-        logits_00 = logits_00[~diag_mask].view(batch_size, -1)  # (bs, bs - 1)
-        logits_11 = logits_11[~diag_mask].view(batch_size, -1)  # (bs, bs - 1)
+        # negative contains the (2N, 2N - 1) similarities between the view of a sample and all the other views that are
+        # not from that same sample
+        mask = ~torch.eye(2 * batch_size, 2 * batch_size, dtype=torch.bool, device=device)  # (2 * bs, 2 * bs)
+        negatives = similarity[mask].view(2 * batch_size, 2 * batch_size - 1)  # (2 * bs, 2 * bs - 1)
 
-        logits_0100 = torch.cat((logits_01, logits_00), dim=1)  # (bs, 2 * bs - 1)
-        logits_1011 = torch.cat((logits_10, logits_11), dim=1)  # (bs, 2 * bs - 1)
-        logits = torch.cat((logits_0100, logits_1011), dim=0)  # (2 * bs, 2 * bs - 1)
+        # the loss can be rewritten as the sum of the alignement loss making the two representations of the same
+        # sample closer, and the distribution loss making the representations of different samples farther
+        loss_alignement = -torch.mean(positives)
+        loss_distribution = torch.mean(torch.logsumexp(negatives, dim=1))
+        loss = loss_alignement + loss_distribution
 
-        labels = torch.arange(batch_size, dtype=torch.long, device=device).repeat(2)  # (2 * bs)
-
-        return F.cross_entropy(logits, labels)
+        return loss
 
 
 class DCL(Module):
@@ -86,11 +86,11 @@ class VICReg(Module):
         return x - torch.mean(x, dim=0)
 
     @staticmethod
-    def _representation_loss(x: Tensor, y: Tensor) -> float:
+    def _representation_loss(x: Tensor, y: Tensor) -> Tensor:
         # minimizes the difference between the embeddings of the two slightly different views of the same sample
         return F.mse_loss(x, y)
 
-    def _variance_loss(self, x: Tensor) -> float:
+    def _variance_loss(self, x: Tensor) -> Tensor:
         # forces std of each embedding dimension to be closer to gamma (> 0) to avoid mapping samples to the same
         # embedding vector, which would result in dimensional collapse
         x_std = torch.sqrt(torch.var(x, dim=0) + self.eps)  # (dim_emb,)
@@ -99,7 +99,7 @@ class VICReg(Module):
         return loss
 
     @staticmethod
-    def _covariance_loss(x: Tensor) -> float:
+    def _covariance_loss(x: Tensor) -> Tensor:
         # forces the covariance of embedding dimensions to be diagonal in order to make each dimension as independent
         # as possible to prevent them from encoding the same information
         batch_size, dim_emb = x.size()
