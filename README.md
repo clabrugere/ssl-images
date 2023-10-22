@@ -56,6 +56,9 @@ Clone the repository:
 - pytorch 2.1.0
 - torchvision 0.16.0
 
+### Usage
+
+See the notebook in `example/example.ipynb`
 
 ## References <a name = "references"></a>
 
