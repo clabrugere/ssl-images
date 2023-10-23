@@ -32,6 +32,12 @@ Following VICREg paper and for simplicity sake, the transformations applied to g
 
 <p align="center"><img src="resources/transformation-example.png"/></p>
 
+### Backbone
+
+The dense representations of the images are generated using a residual neural network (ResNet). It is complemented with a multi-layer perceptron as the projector (or so called "expander" in some papers). While the representations for downstream tasks come from the encoder network, the loss is computed on the representations from the projector. It projects representations of dimensions `dim_emb` to a space of dimension `2 * dim_emb`.
+
+The role of the projector is to decouple the training from the downstream tasks, helping with performance when they are different - which is always the case in self-supervised learning.
+
 ### Loss functions
 
 While steps 1-3 are the same, the loss functions are different:
@@ -45,7 +51,6 @@ While steps 1-3 are the same, the loss functions are different:
   - a term making the variance of each dimension of embedding vectors within a batch converge towards a gamma constant in order to avoid dimensional collapse where all samples are represented by the same vector.
   - a term making the covariance of embedding vectors within a batch converge towards a diagonal matrix in order to make each dimension as independent as possible so that dimensions encode different information.
 
-
 ## Getting Started <a name = "getting_started"></a>
 
 Clone the repository:
@@ -58,7 +63,7 @@ Clone the repository:
 - pytorch 2.1.0
 - torchvision 0.16.0
 
-### Usage
+## Usage
 
 See the notebook in `example/example.ipynb`
 

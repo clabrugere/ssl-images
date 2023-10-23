@@ -6,11 +6,11 @@ from torch import get_num_threads
 @dataclass
 class TrainingConfig:
     device: torch.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    batch_size: int = 16
+    batch_size: int = 1024
     num_workers: int = get_num_threads()
     learning_rate: float = 0.002
     weight_decay: float = 1e-6
-    max_epoch: int = 100
+    max_epoch: int = 10
 
 
 @dataclass

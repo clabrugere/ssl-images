@@ -19,7 +19,7 @@ def train(
     model.to(device)
     model.train()
 
-    optimizer = Adam(model.parameters(), lr=10 * lr, weight_decay=weight_decay)
+    optimizer = Adam(model.parameters(), lr=100 * lr, weight_decay=weight_decay)
     scheduler = CosineAnnealingLR(optimizer, T_max=len(dl_train) * max_epoch, eta_min=lr, verbose=False)
     loss_history = []
 
